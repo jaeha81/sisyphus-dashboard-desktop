@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:* ws://localhost:* 'unsafe-inline' 'unsafe-eval' data:; img-src 'self' data: http: https:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* 'unsafe-inline' 'unsafe-eval' data:; img-src 'self' data: http: https:">
 <title>Sisyphus Dashboard</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -437,6 +437,7 @@ async function checkConfig(){
 
 function applyConfig(d){
   state.hasToken=d.hasToken;
+  if(d.wslHome) wslHome=d.wslHome;
   if(!d.hasToken){
     $('tokenSetup').style.display='flex';
     $('tokenSetup').style.flexDirection='column';
@@ -790,13 +791,13 @@ async function launchNow(pi){
   renderPanels();
 }
 
-const DRIVES=[{label:'💾 C:',path:'/mnt/c'},{label:'💾 D:',path:'/mnt/d'},{label:'🏠 Home',path:wslHome||'/home'},{label:'📁 /mnt',path:'/mnt'}];
-const fb={panel:null,currentDir:'/mnt/c'};
 let wslHome='';
+function getDrives(){return[{label:'💾 C:',path:'/mnt/c'},{label:'💾 D:',path:'/mnt/d'},{label:'🏠 Home',path:wslHome||'/home'},{label:'📁 /mnt',path:'/mnt'}];}
+const fb={panel:null,currentDir:'/mnt/c'};
 
 function openFb(pi){fb.panel=pi;$('fbPathInput').value='';$('fbOverlay').classList.add('open');renderFbDrives();browseDir('/mnt/c');}
 function closeFb(){$('fbOverlay').classList.remove('open');fb.panel=null;}
-function renderFbDrives(){$('fbDrives').innerHTML=DRIVES.map(d=>`<div class="fb-drive" onclick="browseDir('${d.path}')">${d.label}</div>`).join('');}
+function renderFbDrives(){$('fbDrives').innerHTML=getDrives().map(d=>`<div class="fb-drive" onclick="browseDir('${d.path}')">${d.label}</div>`).join('');}
 
 async function browseDir(dir){
   fb.currentDir=dir;$('fbPathInput').value=dir;

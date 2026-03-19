@@ -9,9 +9,10 @@ const isDev = process.argv.includes('--dev') || !app.isPackaged;
 const EXEC_DIR    = path.dirname(process.execPath);
 const ASAR_DIR    = __dirname;
 
-const PLUGINS_DIR = app.isPackaged ? path.join(EXEC_DIR, 'plugins')  : path.join(ASAR_DIR, 'plugins');
-const ENV_FILE    = app.isPackaged ? path.join(EXEC_DIR, '.env.local'): path.join(ASAR_DIR, '.env.local');
-const RENDERER    = app.isPackaged ? path.join(EXEC_DIR, 'renderer') : path.join(ASAR_DIR, 'renderer');
+const PLUGINS_DIR    = app.isPackaged ? path.join(EXEC_DIR, 'plugins')           : path.join(ASAR_DIR, 'plugins');
+const ENV_FILE       = app.isPackaged ? path.join(EXEC_DIR, '.env.local')        : path.join(ASAR_DIR, '.env.local');
+const RENDERER       = app.isPackaged ? path.join(EXEC_DIR, 'renderer')          : path.join(ASAR_DIR, 'renderer');
+const PROGRESS_MAP   = app.isPackaged ? path.join(EXEC_DIR, 'progress_map.json') : path.join(ASAR_DIR, 'progress_map.json');
 
 const { createServer } = require('./server/index');
 const { PluginLoader }  = require('./server/plugin-loader');
@@ -146,11 +147,12 @@ app.whenReady().then(async () => {
     await pluginLoader.load();
 
     serverInstance = await createServer({
-      port:         PORT,
+      port:            PORT,
       pluginLoader,
-      appRoot:      EXEC_DIR,
-      rendererDir:  RENDERER,
-      envFile:      ENV_FILE,
+      appRoot:         EXEC_DIR,
+      rendererDir:     RENDERER,
+      envFile:         ENV_FILE,
+      progressMapFile: PROGRESS_MAP,
     });
 
     createMainWindow();

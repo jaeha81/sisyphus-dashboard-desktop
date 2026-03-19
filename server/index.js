@@ -268,9 +268,7 @@ process.stdout.write(JSON.stringify(all));
   });
 }
 
-const PROGRESS_MAP_FILE = path.join(__dirname, '..', 'progress_map.json');
 let progressMap = {};
-try { progressMap = JSON.parse(fs.readFileSync(PROGRESS_MAP_FILE, 'utf-8')); } catch {}
 
 let githubCache = null, githubCacheTs = 0;
 const GITHUB_CACHE_TTL = 5 * 60 * 1000;
@@ -326,8 +324,12 @@ function cacheStaticFile(fp) {
   } catch {}
 }
 
-async function createServer({ port, pluginLoader, appRoot, rendererDir, envFile }) {
+async function createServer({ port, pluginLoader, appRoot, rendererDir, envFile, progressMapFile }) {
   loadEnvFile(envFile);
+
+  if (progressMapFile) {
+    try { progressMap = JSON.parse(fs.readFileSync(progressMapFile, 'utf-8')); } catch {}
+  }
 
   const RENDERER = rendererDir || path.join(appRoot, 'renderer');
 
@@ -355,6 +357,7 @@ async function createServer({ port, pluginLoader, appRoot, rendererDir, envFile 
         hasToken: !!getGithubToken(),
         cloneBase: CB,
         reposBase: RB,
+        wslHome: getWSLHome(),
         pluginInjections: injections,
       });
     }
