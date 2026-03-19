@@ -13,8 +13,7 @@
     "pack": "electron-builder --win portable"
   },
   "dependencies": {
-    "http-proxy": "^1.18.1",
-    "better-sqlite3": "^9.4.3"
+    "http-proxy": "^1.18.1"
   },
   "devDependencies": {
     "electron": "^28.3.3",
@@ -52,8 +51,7 @@
           "target": "portable",
           "arch": ["x64"]
         }
-      ],
-      "icon": "assets/icon.ico"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -62,7 +60,6 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Sisyphus Dashboard",
-      "installerHeader": "assets/installer-header.bmp",
       "deleteAppDataOnUninstall": false
     },
     "portable": {

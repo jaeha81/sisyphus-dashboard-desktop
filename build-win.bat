@@ -1,48 +1,37 @@
 @echo off
 chcp 65001 > nul
-title Sisyphus Dashboard - Windows Build
+title Sisyphus Dashboard - Build
+color 0E
 
 echo.
-echo  ═══════════════════════════════════════════
-echo   SISYPHUS DASHBOARD  Windows Build Script
-echo  ═══════════════════════════════════════════
+echo  Sisyphus Dashboard - Windows Installer Build
 echo.
 
 where node >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] Node.js가 설치되어 있지 않습니다.
-  echo         https://nodejs.org 에서 설치하세요.
+  echo  [ERROR] Node.js required - https://nodejs.org
   pause & exit /b 1
 )
 
-echo [1/4] 의존성 설치 중...
-call npm install --prefer-offline
-if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] npm install 실패
-  pause & exit /b 1
+cd /d "%~dp0"
+
+if not exist "node_modules" (
+  echo  [1/3] Installing dependencies...
+  call npm install
+  if %ERRORLEVEL% NEQ 0 ( echo  [ERROR] npm install failed & pause & exit /b 1 )
+) else (
+  echo  [1/3] Dependencies OK
 )
 
-echo.
-echo [2/4] 아이콘 파일 확인...
-if not exist "assets\icon.ico" (
-  echo       icon.ico 없음, 기본값 사용
-)
-
-echo.
-echo [3/4] Windows 인스톨러 빌드 중...
+echo  [2/3] Building Windows installer...
 call npm run build
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] 빌드 실패
+  echo  [ERROR] Build failed
   pause & exit /b 1
 )
 
 echo.
-echo [4/4] 완료!
+echo  Build complete! Check dist\ folder
 echo.
-echo  ┌─────────────────────────────────────────┐
-echo  │  dist\ 폴더에 빌드 결과물이 생성되었습니다  │
-echo  │  SisyphusDashboard Setup *.exe          │
-echo  └─────────────────────────────────────────┘
-echo.
-explorer dist
+explorer "%~dp0dist"
 pause
