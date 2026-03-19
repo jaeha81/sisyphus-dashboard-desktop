@@ -1,0 +1,10 @@
+{
+  "id": "system-monitor",
+  "name": "System Monitor",
+  "version": "1.0.0",
+  "description": "Windows CPU, 메모리, 디스크 사용량을 실시간으로 모니터링합니다.",
+  "author": "jaeha81",
+  "main": "index.js",
+  "homepage": "https://github.com/jaeha81/sisyphus-plugin-system-monitor",
+  "keywords": ["system", "cpu", "memory", "monitor", "performance"]
+}

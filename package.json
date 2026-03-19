@@ -1,0 +1,73 @@
+{
+  "name": "sisyphus-dashboard-desktop",
+  "version": "1.0.0",
+  "description": "Sisyphus Dashboard — Windows Desktop App for OpenCode AI Coding",
+  "main": "main.js",
+  "author": "jaeha81",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win",
+    "build:dir": "electron-builder --win --dir",
+    "pack": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1",
+    "better-sqlite3": "^9.4.3"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.jaeha.sisyphus-dashboard",
+    "productName": "Sisyphus Dashboard",
+    "copyright": "MIT © jaeha81",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "server/**/*",
+      "renderer/**/*",
+      "plugins/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "plugins",
+        "to": "plugins"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sisyphus Dashboard",
+      "installerHeader": "assets/installer-header.bmp",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "SisyphusDashboard-portable-${version}.exe"
+    },
+    "publish": null
+  }
+}
