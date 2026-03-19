@@ -8,6 +8,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "prepack": "node scripts/gen-icon.js",
+    "prebuild": "node scripts/gen-icon.js",
     "build": "electron-builder --win",
     "build:dir": "electron-builder --win --dir",
     "pack": "electron-builder --win portable"
@@ -33,6 +35,7 @@
       "renderer/**/*",
       "plugins/**/*",
       "assets/**/*",
+      "scripts/**/*",
       "node_modules/**/*"
     ],
     "extraFiles": [
@@ -42,6 +45,7 @@
       }
     ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "nsis",
