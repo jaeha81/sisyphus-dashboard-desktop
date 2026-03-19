@@ -11,10 +11,34 @@ const { spawn, execFileSync, execSync } = require('child_process');
 const httpProxy = require('http-proxy');
 const wsl = require('./wsl');
 
-const WSL_HOME    = wsl.getWslHome();
-const TTYD_BIN    = `${WSL_HOME}/.local/bin/ttyd`;
-const PANEL_PORTS = { 1: 7001, 2: 7002, 3: 7003, 4: 7004 };
+const PANEL_PORTS = { 1: 17001, 2: 17002, 3: 17003, 4: 17004 };
 const TERMINAL_RE = /^\/terminal\/([1-4])(\/.*)?$/;
+
+let _WSL_HOME     = null;
+let _OPENCODE_BIN = null;
+let _TTYD_BIN     = null;
+
+function getWSLHome() {
+  if (!_WSL_HOME) _WSL_HOME = wsl.getWslHome();
+  return _WSL_HOME;
+}
+
+function getTtydBin()     { return _TTYD_BIN     || `${getWSLHome()}/.local/bin/ttyd`; }
+function getOpencodebin() {
+  if (_OPENCODE_BIN) return _OPENCODE_BIN;
+  const home = getWSLHome();
+  const candidates = [
+    `${home}/.local/bin/opencode`,
+    `${home}/.nvm/versions/node/v24.14.0/bin/opencode`,
+    `${home}/.nvm/versions/node/v22.0.0/bin/opencode`,
+    '/usr/local/bin/opencode',
+  ];
+  for (const c of candidates) {
+    try { wsl.wslExecSync(`test -x ${JSON.stringify(c)}`, { timeout: 3000 }); _OPENCODE_BIN = c; return c; } catch {}
+  }
+  _OPENCODE_BIN = 'opencode';
+  return _OPENCODE_BIN;
+}
 
 function loadEnvFile(envFile) {
   try {
@@ -36,32 +60,13 @@ function getCloneBase(reposBase) {
   return process.env.CLONE_BASE || reposBase[0] || path.join(os.homedir(), 'repos');
 }
 
-const OPENCODE_BIN = (() => {
-  const candidates = [
-    `${WSL_HOME}/.local/bin/opencode`,
-    `${WSL_HOME}/.nvm/versions/node/v24.14.0/bin/opencode`,
-    `${WSL_HOME}/.nvm/versions/node/v22.0.0/bin/opencode`,
-    '/usr/local/bin/opencode',
-  ];
-  for (const c of candidates) {
-    try {
-      wsl.wslExecSync(`test -x ${JSON.stringify(c)}`);
-      return c;
-    } catch {}
-  }
-  return 'opencode';
-})();
-
-const NVM_INIT = `source "${WSL_HOME}/.nvm/nvm.sh" 2>/dev/null`;
-const PATH_EXTRA = [
-  `${WSL_HOME}/.nvm/versions/node/v24.14.0/bin`,
-  `${WSL_HOME}/.local/bin`,
-].join(':');
-const WSL_ENV_PREFIX = `PATH="${PATH_EXTRA}:$PATH" TERM=xterm-256color`;
-
-function openCodeDB() {
-  return `${WSL_HOME}/.local/share/opencode/opencode.db`;
+function getNvmInit()      { return `source "${getWSLHome()}/.nvm/nvm.sh" 2>/dev/null`; }
+function getWslEnvPrefix() {
+  const h = getWSLHome();
+  return `PATH="${h}/.nvm/versions/node/v24.14.0/bin:${h}/.local/bin:$PATH" TERM=xterm-256color`;
 }
+
+function openCodeDB() { return `${getWSLHome()}/.local/share/opencode/opencode.db`; }
 
 function queryOcSessions(dir, limit = 20) {
   const db = openCodeDB();
@@ -171,16 +176,21 @@ async function killPanel(n) {
 
 async function startPanel(n, port, repoDir, sessionId) {
   await killPanel(n);
+  const HOME   = getWSLHome();
+  const TTYD   = getTtydBin();
+  const OC     = getOpencodebin();
+  const NVM    = getNvmInit();
+  const PREFIX = getWslEnvPrefix();
   let bashCmd;
   if (repoDir === null) {
-    bashCmd = `${WSL_ENV_PREFIX} ${TTYD_BIN} --port ${port} --writable --ping-interval 15 --cwd "${WSL_HOME}" bash`;
+    bashCmd = `${PREFIX} ${TTYD} --port ${port} --writable --ping-interval 15 --cwd "${HOME}" bash`;
     panelState[n] = { mode: 'idle' };
   } else {
-    const cwd = repoDir || WSL_HOME;
+    const cwd = repoDir || HOME;
     const ocCmd = sessionId
-      ? `${NVM_INIT}; cd ${JSON.stringify(cwd)} && exec ${OPENCODE_BIN} --continue ${sessionId}`
-      : `${NVM_INIT}; cd ${JSON.stringify(cwd)} && exec ${OPENCODE_BIN}`;
-    bashCmd = `${WSL_ENV_PREFIX} ${TTYD_BIN} --port ${port} --writable --ping-interval 15 bash -c ${JSON.stringify(ocCmd)}`;
+      ? `${NVM}; cd ${JSON.stringify(cwd)} && exec ${OC} --continue ${sessionId}`
+      : `${NVM}; cd ${JSON.stringify(cwd)} && exec ${OC}`;
+    bashCmd = `${PREFIX} ${TTYD} --port ${port} --writable --ping-interval 15 bash -c ${JSON.stringify(ocCmd)}`;
     panelState[n] = {
       mode: 'opencode',
       repo: repoDir ? path.basename(repoDir) : 'Home',
@@ -316,10 +326,10 @@ function cacheStaticFile(fp) {
   } catch {}
 }
 
-async function createServer({ port, pluginLoader, appRoot, envFile }) {
+async function createServer({ port, pluginLoader, appRoot, rendererDir, envFile }) {
   loadEnvFile(envFile);
 
-  const RENDERER = path.join(appRoot, 'renderer');
+  const RENDERER = rendererDir || path.join(appRoot, 'renderer');
 
   const proxy = httpProxy.createProxyServer({ ws: true, changeOrigin: true });
   proxy.on('error', () => {});
